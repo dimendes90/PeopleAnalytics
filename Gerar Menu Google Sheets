@@ -1,0 +1,16 @@
+#GerarMenu - Python Local
+
+function onOpen(e) {
+
+  const menu = SpreadsheetApp.getUi().createMenu("Gerar PDF e Enviar")
+    menu
+      .addItem('Gerar PDF - p4p', 'gerarPDFp4p')
+      .addSeparator()
+      .addItem('Enviar E-mail - p4p', 'enviar_email_p4p')
+      .addSeparator()
+      .addItem('Ler nomes de PDFs','listarArquivosNaPlanilha')
+      .addSeparator()
+      .addItem('Ler conteúdo PDF' ,'lerArquivosPDF')
+      
+      .addToUi()
+}
