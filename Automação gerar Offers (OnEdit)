@@ -1,0 +1,232 @@
+function onEdit(e){
+  if(e.range.getSheet().getSheetName() !== 'NovoTemplate') return
+  
+  const editedRangeRow = e.range.getRow();
+  const editedRangeColumn = e.range.getColumn()
+
+  if(editedRangeColumn === 4 && editedRangeRow === 5) {
+    const positionSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Tabela Salarial_em construcao')
+    const listSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Listas')
+    const selectedPosition = SpreadsheetApp.getActive().getRange('D5').getValue()
+    const selectedCargo = SpreadsheetApp.getActive().getRange('i5').getValue()
+    const positionData = positionSheet.getRange('C2:AD').getValues().filter(item => item[0] === selectedCargo)
+
+    SpreadsheetApp.getActive().getRange('i7').setValue(selectedCargo); //cargo
+
+    SpreadsheetApp.getActive().getRange('K27').setValue(positionData[0][6]); //Sal
+    SpreadsheetApp.getActive().getRange('K34').setValue(positionData[0][10]); //P4P
+    SpreadsheetApp.getActive().getRange('K45').setValue(0); //ILP
+    SpreadsheetApp.getActive().getRange('K33').setValue(0); //Comissao
+    SpreadsheetApp.getActive().getRange('K35').setValue(0); //Outros
+    //beneficios
+    SpreadsheetApp.getActive().getRange('K64').setValue(positionData[0][23]); //saúde
+    SpreadsheetApp.getActive().getRange('K65').setValue(positionData[0][24]); //vavr
+    SpreadsheetApp.getActive().getRange('K66').setValue(positionData[0][25]); //seg vida
+    SpreadsheetApp.getActive().getRange('K68').setValue(positionData[0][22]); //Outros
+
+    const selectedGrupoCargo = SpreadsheetApp.getActive().getRange('J5').getValue()
+    const positionDataILP = listSheet.getRange('U2:Y').getValues().filter(item => item[0] === selectedGrupoCargo)
+    
+    SpreadsheetApp.getActive().getRange('K44').setValue(positionDataILP[0][3]); //Programa
+    SpreadsheetApp.getActive().getRange('K45').setValue(positionDataILP[0][4]); //ICP
+
+
+  }
+  
+}
+
+
+function exportaroffers() {
+  // Obter a planilha ativa
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+
+
+  desocultarAba ()
+
+  //var origemSheet = SpreadsheetApp.getSheetByName("NovoTemplate");
+  var origemSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("NovoTemplate");
+
+
+  //salvar valores em variveis
+  const candidateName = origemSheet.getRange('D7').getValue(); //NOME
+  const selectedPosition = origemSheet.getRange('D5').getValue();
+
+  const transferRange1 = origemSheet.getRange('D8:D9').getValues();
+  const transferRange2 = origemSheet.getRange('I6:N9').getValues();
+  const transferRange3 = origemSheet.getRange('E27:E35').getValues(); //TCASH v
+  const transferRange4 = origemSheet.getRange('K27:K28').getValues(); //sal
+  const transferRange5 = origemSheet.getRange('K33:K35').getValues(); //p4p
+  const transferRange6 = origemSheet.getRange('E44:E49').getValues();
+  const transferRange7 = origemSheet.getRange('K44:E45').getValues();
+  const transferRange8 = origemSheet.getRange('E64:E68').getValues(); //benefic
+  const transferRange9 = origemSheet.getRange('K64:K68').getValues();
+  const transferRange10 = origemSheet.getRange('C97:M180').getValues(); //PEERs
+
+  const transferRange11 = origemSheet.getRange('N34').getValue();
+  const transferRange12 = origemSheet.getRange('K40').getValue();
+  const transferRange13 = origemSheet.getRange('O30').getValue();
+
+  const custoOffer = origemSheet.getRange('J21:k21').getValue();
+
+
+  //Começo do meu script - Checar se posição existe na Payroll Committee (Part 1)<<<<<<<<<<<<<
+
+  //const fileSheetCommittee = SpreadsheetApp.openByUrl("https://docs.google.com/spreadsheets/d/1K1Y911XWYqUN_me9rBh9GgOeu906L5FD33PQXau96NU/edit?gid=0#gid=0");
+  //const sheetCommittee = fileSheetCommittee.getSheetByName("Detalhamento Vagas Atuais");
+  //const positionsCommittee = sheetCommittee.getRange("D:D").getValues()
+
+  // Procurar o selectedPosition na coluna D
+ // for (var i = 0; i < positionsCommittee.length; i++) {
+ //    if (i === positionsCommittee.length) {
+ //   Logger.log('A posição não foi encontrada na planilha do Hiring Committee, por favor preencha a informação correta ou atualize a planilha')
+ //   return
+
+ // }else{
+
+ //   if (positionsCommittee[i][0] === selectedPosition) {
+ //      var linha = i + 1; // Adicionar 1 porque i começa em 0, mas as linhas começam em 1
+ //     break; // Parar o loop após encontrar a linha
+ //  }
+  // incluir tudo aqui dentro
+// }
+ //}
+
+ //Fim do meu script - Checar se posição existe na Payroll Committee (Part 1)<<<<<<<<<
+
+ // Obter a aba "Teste_Template"
+  var sourceSheet = spreadsheet.getSheetByName("Modelo_Exportacao");
+  
+  //copy/paste
+  sourceSheet.getRange('D5').setValue(selectedPosition);
+  sourceSheet.getRange('D7').setValue(candidateName);
+
+  sourceSheet.getRange('D8:D9').setValues(transferRange1);
+  sourceSheet.getRange('I6:N9').setValues(transferRange2);
+  sourceSheet.getRange('E27:E35').setValues(transferRange3);
+  sourceSheet.getRange('K27:K28').setValues(transferRange4);
+  sourceSheet.getRange('K33:K35').setValues(transferRange5);
+  sourceSheet.getRange('E44:E49').setValues(transferRange6);
+  sourceSheet.getRange('K44:E45').setValues(transferRange7);
+  sourceSheet.getRange('E64:E68').setValues(transferRange8);
+  sourceSheet.getRange('K64:K68').setValues(transferRange9);
+  sourceSheet.getRange('C97:M180').setValues(transferRange10);
+  sourceSheet.getRange('J21:K21').setValue(custoOffer);
+  sourceSheet.getRange('N34').setValue(transferRange11);
+  sourceSheet.getRange('K40').setValue(transferRange12);
+  sourceSheet.getRange('O30').setValue(transferRange13);
+
+  //Começo do meu script - Colar valores na Planilha Hiring Committee (Part 2)<<<<<<<<
+
+  //const totalShares = origemSheet.getRange('K45:L45').getValues();
+  //const totalShares2YearsValue = origemSheet.getRange('K54:L54').getValues();
+  //const percentualFaixaSalarialNeon = origemSheet.getRange('K29:L29').getValues();
+  //var custoTotalDez = origemSheet.getRange('J21:K21').getValues();
+  //var custoTotalDez = custoTotalDez * 12
+
+  //sheetCommittee.getRange("Q"+linha).setValue("4. Offer")
+  //sheetCommittee.getRange("R"+linha).setValue(transferRange4)
+  //sheetCommittee.getRange("S"+linha).setValue(transferRange5)
+  //sheetCommittee.getRange("T"+linha).setValue(transferRange3)
+  //sheetCommittee.getRange("U"+linha).setValue(totalShares)
+  //sheetCommittee.getRange("V"+linha).setValue(totalShares2YearsValue)
+  //sheetCommittee.getRange("W"+linha).setValue(percentualFaixaSalarialNeon)    
+  //sheetCommittee.getRange("X"+linha).setValue(custoTotalDez)
+
+  //Fim do meu script - Colar valores na Planilha Hiring Committee (Part 2)<<<<<<<<<
+
+
+
+  const fileName = "Offer" + " " + candidateName + " " + selectedPosition
+  const nameShets = candidateName + " " + selectedPosition
+
+  // Criar um novo arquivo do Google Sheets
+  var newSpreadsheet = SpreadsheetApp.create(nameShets);
+
+  // Copiar a aba "Teste_Template" para o novo arquivo
+  var newSheet = sourceSheet.copyTo(newSpreadsheet);
+
+  // Renomear a nova aba para "Teste_Template"
+  newSheet.setName(fileName);
+
+  // Deletar a aba padrão criada automaticamente no novo arquivo
+  newSpreadsheet.deleteSheet(newSpreadsheet.getSheets()[0]);
+
+  // ID da pasta do Drive onde a nova planilha será salva 
+  var idPastaDrive = '1f3fgZUPJb2Vb_KJRQ7G5lw4epRzyFvyS';
+
+  // Mover a nova planilha para a pasta específica do Drive
+  var arquivoNovaPlanilha = DriveApp.getFileById(newSpreadsheet.getId());
+
+  var pastaDestino = DriveApp.getFolderById(idPastaDrive);
+  pastaDestino.addFile(arquivoNovaPlanilha);
+  
+  // Remover a nova planilha da pasta "Meu Drive"
+  DriveApp.getRootFolder().removeFile(arquivoNovaPlanilha);
+  
+  //limpar
+  origemSheet.getRange('D5').setValue("");
+  origemSheet.getRange('D7').setValue("");
+  origemSheet.getRange('D8').setValue("");
+  origemSheet.getRange('i7').setValue("");
+  origemSheet.getRange('e27').setValue(0);
+  origemSheet.getRange('e33').setValue(0);
+  origemSheet.getRange('e34').setValue(0);
+  origemSheet.getRange('e35').setValue(0);
+  origemSheet.getRange('K27').setValue(0);
+  origemSheet.getRange('k33').setValue(0);
+  origemSheet.getRange('k34').setValue(0);
+  origemSheet.getRange('k35').setValue(0);
+  origemSheet.getRange('E45').setValue(0);
+  origemSheet.getRange('E46').setValue(0);
+  origemSheet.getRange('E47').setValue(0);
+  origemSheet.getRange('E48').setValue(0);
+  origemSheet.getRange('E64').setValue(0);
+  origemSheet.getRange('E65').setValue(0);
+  origemSheet.getRange('E66').setValue(0);
+  origemSheet.getRange('E67').setValue(0);
+  origemSheet.getRange('E68').setValue(0);
+  origemSheet.getRange('k64').setValue(0);
+  origemSheet.getRange('k65').setValue(0);
+  origemSheet.getRange('k66').setValue(0);
+  origemSheet.getRange('k67').setValue(0);
+  origemSheet.getRange('k68').setValue(0);
+  
+
+
+  ocultarAba ()
+  
+  Logger.log('Offer Criada');
+}
+
+
+
+
+
+function desocultarAba() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getSheetByName("Modelo_Exportacao");
+
+  if (sheet != null) {
+    sheet.showSheet(); // Use showSheet to unhide the sheet
+  } else {
+    console.error("Sheet not found: NomeDaAba"); // Optional: Log an error if the sheet doesn't exist
+  }
+}
+
+function ocultarAba() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet.getSheetByName("Modelo_Exportacao");
+  if (sheet != null) {
+    sheet.hideSheet();
+  }
+}
+
+
+
+
+
+
+
+
+
+
