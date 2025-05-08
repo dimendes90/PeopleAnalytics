@@ -1,0 +1,32 @@
+#pip install pandas openpyxl
+​
+import pandas as pd
+​
+# Caminho para o arquivo Excel 'C:///
+arquivo_excel = 'C:/.xlsx'
+​
+# Lê todas as abas do arquivo Excel
+xls = pd.ExcelFile(arquivo_excel)
+​
+# Lista para armazenar os DataFrames
+lista_dfs = []
+​
+# Loop por cada aba no arquivo
+for nome_aba in xls.sheet_names:
+    # Lê o DataFrame da aba
+    df = pd.read_excel(xls, sheet_name=nome_aba)
+    
+    # Adiciona uma nova coluna com o nome da aba
+    df['Nome_Aba'] = nome_aba
+    
+    # Adiciona o DataFrame à lista
+    lista_dfs.append(df)
+​
+# Concatena todos os DataFrames em um único DataFrame
+df_consolidado = pd.concat(lista_dfs, ignore_index=True)
+​
+# Opcional: Salva o DataFrame consolidado em um novo arquivo Excel
+df_consolidado.to_excel('C:/', index=False)
+​
+# Exibe o DataFrame consolidado (opcional)
+print(df_consolidado)
