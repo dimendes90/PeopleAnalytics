@@ -1,0 +1,410 @@
+/*************************************
+Author: Diego Mendes
+Description: A tool for create and send automatic email for promotion and bonus letters
+**************************************/
+
+/************************************* Handless
+
+const ssSubmitTool = SpreadsheetApp.getActiveSpreadsheet()
+const promotionSheet = ssSubmitTool.getSheetByName('Movimentação')
+//const bonusSheet = ssSubmitTool.getSheetByName('P4P')
+
+
+/****   Gerar Cartinha !!!     ***/
+
+function handleCreatePromotionLetter() {
+  const destinationFolder = DriveApp.getFolderById('1hesyEEsiECOsmfVYiwsc0vQIWFkziZJT') //  <-Drive salvar cartas 
+  const templatePromotionId = promotionSheet.getRange('I1').getValue()
+  const templateMeritId = promotionSheet.getRange('I2').getValue()
+  const templateMeritIdP4PS = promotionSheet.getRange('P1').getValue()
+  const templateMeritIdP4P = promotionSheet.getRange('P2').getValue()
+
+  const promotionData = promotionSheet.getRange('A5:X').getValues().filter(function(item) {return item[12] != ""})
+
+  for(i=0; i<promotionData.length; i++){
+    let pdfId = ""
+    if(promotionData[i][0]){
+      if (promotionData[i][11]==='Promoção (Salário + P4P)'){
+        pdfId = createPromotionLetter(destinationFolder, templatePromotionId, promotionData[i][11], promotionData[i][12], promotionData[i][13], promotionData[i][14], promotionData[i][15], promotionData[i][16], promotionData[i][17], promotionData[i][18], promotionData[i][19], promotionData[i][20], promotionData[i][21], promotionData[i][22], promotionData[i][23])
+
+      }else if (promotionData[i][11]==='Mérito (Salário + Target P4P)'){
+          pdfId = createMerit2LetterP4PS(destinationFolder, templateMeritIdP4PS, promotionData[i][11], promotionData[i][12], promotionData[i][14], promotionData[i][15], promotionData[i][16], promotionData[i][17], promotionData[i][18], promotionData[i][19], promotionData[i][20], promotionData[i][21], promotionData[i][22], promotionData[i][23])
+ 
+      }else if (promotionData[i][11]==='Prêmio'){
+        pdfId = createMeritLetterP4P(destinationFolder, templateMeritIdP4P, promotionData[i][11], promotionData[i][12], promotionData[i][16], promotionData[i][17], promotionData[i][18], promotionData[i][19], promotionData[i][20], promotionData[i][21], promotionData[i][22], promotionData[i][23])     
+      
+            
+      }else {
+        pdfId = createMeritLetter(destinationFolder, templateMeritId, promotionData[i][11], promotionData[i][12], promotionData[i][14], promotionData[i][15], promotionData[i][17], promotionData[i][18], promotionData[i][19], promotionData[i][20], promotionData[i][21], promotionData[i][22], promotionData[i][23])
+      }
+      promotionSheet.getRange(i+5, 1).clearContent()
+      promotionSheet.getRange(i+5, 2).setValue('Gerado')
+      promotionSheet.getRange(i+5, 3).setValue(pdfId)
+      promotionSheet.getRange(i+5, 4).setValue(new Date())
+    }
+  }
+  SpreadsheetApp.getUi().alert("Movimentação: Arquivos gerados!")
+}
+
+
+/****                            Gerar E-mail PRODUÇÃO          !!!                     ***/
+function handlePromotionSubmit() {
+  const destinationFolder = DriveApp.getFolderById('1hesyEEsiECOsmfVYiwsc0vQIWFkziZJT')
+  //const docId = promotionSheet.getRange('L1').getValue()
+  const promotionData = promotionSheet.getRange('A5:W').getValues().filter(function(item) {return item[12] != ""})
+  let docId = ''
+
+
+  for(i=0; i<promotionData.length; i++){
+    if(promotionData[i][4]){
+      if (promotionData[i][11]==='Promoção (Salário + P4P)'){
+        docId = promotionSheet.getRange('M1').getValue()
+      
+      
+      }else if (promotionData[i][11]==='Prêmio'){
+        docId = promotionSheet.getRange('S1').getValue()
+        
+      }else{
+        docId = promotionSheet.getRange('M2').getValue()
+      }
+      const htmlBody = htmlEmailBody(destinationFolder, docId, promotionData[i][12])
+
+      sendEmail(promotionData[i][5], promotionData[i][6], promotionData[i][7], promotionData[i][2], promotionData[i][8], htmlBody)
+
+      promotionSheet.getRange(i+5, 5).clearContent()
+      promotionSheet.getRange(i+5, 10).setValue('Enviado')
+      promotionSheet.getRange(i+5, 11).setValue(new Date())
+
+    }
+  }
+
+
+  SpreadsheetApp.getUi().alert("Movimentação: E-mails enviados!")
+}
+
+
+
+
+
+
+/** p4p */
+
+function handleCreateBonusLetter() {
+  const destinationFolder = DriveApp.getFolderById('1hesyEEsiECOsmfVYiwsc0vQIWFkziZJT')
+  const templateId = bonusSheet.getRange('I1').getValue()
+  const bonusData = bonusSheet.getRange('A5:AC').getValues().filter(function(item) {return item[11] != ""})
+
+  for(i=0; i<bonusData.length; i++){
+    if(bonusData[i][0]){
+      const pdfId = createBonusLetter(destinationFolder, templateId, bonusData[i][11], bonusData[i][12], bonusData[i][13], bonusData[i][14], bonusData[i][15], bonusData[i][16], bonusData[i][17], bonusData[i][18], bonusData[i][19], bonusData[i][20], bonusData[i][21], bonusData[i][22], bonusData[i][23], bonusData[i][24], bonusData[i][25], bonusData[i][26], bonusData[i][27], bonusData[i][28])
+
+      bonusSheet.getRange(i+5, 1).clearContent()
+      bonusSheet.getRange(i+5, 2).setValue('Gerado')
+      bonusSheet.getRange(i+5, 3).setValue(pdfId)
+      bonusSheet.getRange(i+5, 4).setValue(new Date())
+    }
+  }
+  
+  SpreadsheetApp.getUi().alert("P4P: Arquivos gerados!")
+}
+
+function handleBonusSubmit() {
+  const destinationFolder = DriveApp.getFolderById('1hesyEEsiECOsmfVYiwsc0vQIWFkziZJT')
+  const docId = bonusSheet.getRange('L1').getValue()
+  const bonusData = bonusSheet.getRange('A5:AC').getValues().filter(function(item) {return item[11] != ""})
+
+  for(i=0; i < bonusData.length; i++){
+    if(bonusData[i][4]){
+      const htmlBody = htmlEmailBody(destinationFolder, docId, bonusData[i][11])
+
+      sendEmail(bonusData[i][5], bonusData[i][6], bonusData[i][7], bonusData[i][2], bonusData[i][8], htmlBody)
+
+      bonusSheet.getRange(i+5, 5).clearContent()
+      bonusSheet.getRange(i+5, 10).setValue('Enviado')
+      bonusSheet.getRange(i+5, 11).setValue(new Date())
+
+    }
+  }
+
+  SpreadsheetApp.getUi().alert("P4P: E-mails enviados!")
+}
+
+
+
+
+
+**************************************/ Menu  **************************************/
+
+
+
+
+function onOpen(e) {
+
+  const menu = SpreadsheetApp.getUi().createMenu("Gerar PDF e Enviar")
+    menu
+      .addItem('Gerar PDF - Movimentação', 'handleCreatePromotionLetter')
+      .addSeparator()
+      .addItem('Enviar E-mail - Movimentação', 'handlePromotionSubmit')
+      
+      /**.addItem('Gerar PDF - P4P', 'handleCreateBonusLetter')
+      .addItem('Enviar E-mail - P4P', 'handleBonusSubmit') */
+      .addToUi()
+}
+
+
+
+
+
+**************************************/ Letters  **************************************/
+
+
+
+function currencyFormat(value) {
+  const valueFormated = Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+    })
+    .format(value)
+
+  return valueFormated
+}
+
+/** vvv --- Promoção --- vvv */
+
+function createPromotionLetter(destinationFolder, templatePromotionId, type, name, position, salary, percent, target, dtVig, dtPgto, ptsTot, ptsSaude, ptsOutros, dtBenef){
+  
+  const namefile = "Ciclo de Reconhecimento "
+  const nameantigo = type
+  const fileName = `${namefile} - ${name}`
+
+  const newFile = DriveApp.getFileById(templatePromotionId).makeCopy(fileName, destination=destinationFolder)
+  const newDoc = SlidesApp.openById(newFile.getId())
+  const docBody = newDoc.getSlides()
+
+  docBody.forEach(function(slide){
+     const shapes = (slide.getShapes());
+     shapes.forEach(function(shape){
+       shape.getText().replaceAllText("{NOME_COLABORADOR}", name)
+       shape.getText().replaceAllText("{CARGO}", position)
+       shape.getText().replaceAllText("{SALARIO}", currencyFormat(salary))
+       //shape.getText().replaceAllText("{TIPO_MOVIMENTO}", type==='Promoção' ? `uma ${type}` : `um ${type}`)
+       //shape.getText().replaceAllText("{DATA_MOVIMENTACAO}", new Date(dtMov).toLocaleDateString('pt-BR'))
+       //shape.getText().replaceAllText("{PERCENTUAL}", (percent*100))
+       //shape.getText().replaceAllText("{PERCENTUAL}", percent)
+       shape.getText().replaceAllText("{PERCENTUAL}", formatarPorcentagem(percent))
+       shape.getText().replaceAllText("{DATA_VIGENCIA}", new Date(dtVig).toLocaleDateString('pt-BR', {year:'numeric', month: 'long', day:'numeric'}))
+       shape.getText().replaceAllText("{DATA_PAGAMENTO}", new Date(dtPgto).toLocaleDateString('pt-BR', {month: 'numeric', day:'numeric'}))
+       shape.getText().replaceAllText("{TARGET}", currencyFormat(target))
+       shape.getText().replaceAllText("{PTS_TOT}", currencyFormat(ptsTot))
+       /** shape.getText().replaceAllText("{SAUDE}", ptsSaude)
+       shape.getText().replaceAllText("{PTS_OUTROS}", ptsOutros) 
+       shape.getText().replaceAllText("{DATA_BENEF}", new Date(dtBenef).toLocaleDateString('pt-BR', {month: 'numeric', day:'numeric'})) */
+     }); 
+   })
+
+  newDoc.saveAndClose()
+
+  const pdfBlob = DriveApp.getFileById(newDoc.getId()).getBlob()
+  const pdf = destinationFolder.createFile(pdfBlob)
+  const pdfId = pdf.getId()
+  DriveApp.getFileById(newDoc.getId()).setTrashed(true)
+
+  return pdfId
+}
+
+
+/** vvv --- Mérito! --- vvv */
+
+function createMeritLetter(destinationFolder, templateMeritId, type, name, salary, percent, dtVig, dtPgto, ptsTot, ptsSaude, ptsOutros, dtBenef){
+  //const fileName = `${type} - ${name}`
+
+  const namefile = "Ciclo de Reconhecimento "
+  const nameantigo = type
+  const fileName = `${namefile} - ${name}`
+
+  const newFile = DriveApp.getFileById(templateMeritId).makeCopy(fileName, destination=destinationFolder)
+  const newDoc = SlidesApp.openById(newFile.getId())
+  const docBody = newDoc.getSlides()
+
+  docBody.forEach(function(slide){
+     const shapes = (slide.getShapes());
+     shapes.forEach(function(shape){
+       shape.getText().replaceAllText("{NOME_COLABORADOR}", name)
+       //shape.getText().replaceAllText("{CARGO}", position)
+       shape.getText().replaceAllText("{SALARIO}", currencyFormat(salary))
+       //shape.getText().replaceAllText("{TIPO_MOVIMENTO}", type==='Promoção' ? `uma ${type}` : `um ${type}`)
+       //shape.getText().replaceAllText("{DATA_MOVIMENTACAO}", new Date(dtMov).toLocaleDateString('pt-BR'))
+       //shape.getText().replaceAllText("{PERCENTUAL}", (percent))
+       shape.getText().replaceAllText("{PERCENTUAL}", formatarPorcentagem(percent))
+       shape.getText().replaceAllText("{DATA_VIGENCIA}", new Date(dtVig).toLocaleDateString('pt-BR', {year:'numeric', month: 'long', day:'numeric'}))
+       shape.getText().replaceAllText("{DATA_PAGAMENTO}", new Date(dtPgto).toLocaleDateString('pt-BR', {month: 'numeric', day:'numeric'}))
+       /** shape.getText().replaceAllText("{TARGET}", currencyFormat(target))
+       shape.getText().replaceAllText("{PTS_TOT}", ptsTot)
+       shape.getText().replaceAllText("{SAUDE}", ptsSaude)
+       shape.getText().replaceAllText("{PTS_OUTROS}", ptsOutros) 
+       shape.getText().replaceAllText("{DATA_BENEF}", new Date(dtBenef).toLocaleDateString('pt-BR', {month: 'numeric', day:'numeric'})) */
+     }); 
+   })
+
+
+  newDoc.saveAndClose()
+
+  const pdfBlob = DriveApp.getFileById(newDoc.getId()).getBlob()
+  const pdf = destinationFolder.createFile(pdfBlob)
+  const pdfId = pdf.getId()
+  DriveApp.getFileById(newDoc.getId()).setTrashed(true)
+
+  return pdfId
+}
+
+
+
+
+
+
+/** vvv --- Mérito p4p + Salario! --- vvv */
+
+function createMerit2LetterP4PS (destinationFolder, templateMeritIdP4PS, type, name, salary, percent, target, dtVig, dtPgto, ptsTot, ptsSaude, ptsOutros, dtBenef){
+  //const fileName = `${type} - ${name}`
+  const namefile = "Ciclo de Reconhecimento "
+  const nameantigo = type
+  const fileName = `${namefile} - ${name}`
+
+  const newFile = DriveApp.getFileById(templateMeritIdP4PS).makeCopy(fileName, destination=destinationFolder)
+  const newDoc = SlidesApp.openById(newFile.getId())
+  const docBody = newDoc.getSlides()
+
+  docBody.forEach(function(slide){
+     const shapes = (slide.getShapes());
+     shapes.forEach(function(shape){
+       shape.getText().replaceAllText("{NOME_COLABORADOR}", name)
+       //shape.getText().replaceAllText("{CARGO}", position)
+       shape.getText().replaceAllText("{SALARIO}", currencyFormat(salary))
+       //shape.getText().replaceAllText("{TIPO_MOVIMENTO}", type==='Promoção' ? `uma ${type}` : `um ${type}`)
+       //shape.getText().replaceAllText("{DATA_MOVIMENTACAO}", new Date(dtMov).toLocaleDateString('pt-BR'))
+       //shape.getText().replaceAllText("{PERCENTUAL}", (percent))
+       shape.getText().replaceAllText("{PERCENTUAL}", formatarPorcentagem(percent))
+       shape.getText().replaceAllText("{DATA_VIGENCIA}", new Date(dtVig).toLocaleDateString('pt-BR', {year:'numeric', month: 'long', day:'numeric'}))
+       shape.getText().replaceAllText("{DATA_PAGAMENTO}", new Date(dtPgto).toLocaleDateString('pt-BR', {month: 'numeric', day:'numeric'}))
+       shape.getText().replaceAllText("{TARGET}", currencyFormat(target))
+       /** shape.getText().replaceAllText("{PTS_TOT}", ptsTot)
+       shape.getText().replaceAllText("{SAUDE}", ptsSaude)
+       shape.getText().replaceAllText("{PTS_OUTROS}", ptsOutros) 
+       shape.getText().replaceAllText("{DATA_BENEF}", new Date(dtBenef).toLocaleDateString('pt-BR', {month: 'numeric', day:'numeric'})) */
+     }); 
+   })
+
+
+  newDoc.saveAndClose()
+
+  const pdfBlob = DriveApp.getFileById(newDoc.getId()).getBlob()
+  const pdf = destinationFolder.createFile(pdfBlob)
+  const pdfId = pdf.getId()
+  DriveApp.getFileById(newDoc.getId()).setTrashed(true)
+
+  return pdfId
+}
+
+
+
+/** vvv --- Mérito Só p4p / Prêmio ! --- vvv */
+
+function createMeritLetterP4P (destinationFolder, templateMeritIdP4P, type, name, target, dtVig, dtPgto, ptsTot, ptsSaude, ptsOutros, dtBenef){
+  //const fileName = `${type} - ${name}`
+
+    
+  const namefile = "Prêmio "
+  const nameantigo = type
+  const fileName = `${namefile} - ${name}`
+
+  const newFile = DriveApp.getFileById(templateMeritIdP4P).makeCopy(fileName, destination=destinationFolder)
+  const newDoc = SlidesApp.openById(newFile.getId())
+  const docBody = newDoc.getSlides()
+
+  docBody.forEach(function(slide){
+     const shapes = (slide.getShapes());
+     shapes.forEach(function(shape){
+       shape.getText().replaceAllText("{NOME_COLABORADOR}", name)
+       //shape.getText().replaceAllText("{CARGO}", position)
+       //shape.getText().replaceAllText("{SALARIO}", currencyFormat(salary))
+       //shape.getText().replaceAllText("{TIPO_MOVIMENTO}", type==='Promoção' ? `uma ${type}` : `um ${type}`)
+       //shape.getText().replaceAllText("{DATA_MOVIMENTACAO}", new Date(dtMov).toLocaleDateString('pt-BR'))
+       //shape.getText().replaceAllText("{PERCENTUAL}", (percent))
+       shape.getText().replaceAllText("{DATA_VIGENCIA}", new Date(dtVig).toLocaleDateString('pt-BR', {year:'numeric', month: 'long', day:'numeric'}))
+       //shape.getText().replaceAllText("{DATA_PAGAMENTO}", new Date(dtPgto).toLocaleDateString('pt-BR', {month: 'numeric', day:'numeric'}))
+       shape.getText().replaceAllText("{TARGET}", currencyFormat(target))
+       /** shape.getText().replaceAllText("{PTS_TOT}", ptsTot)
+       shape.getText().replaceAllText("{SAUDE}", ptsSaude)
+       shape.getText().replaceAllText("{PTS_OUTROS}", ptsOutros) 
+       shape.getText().replaceAllText("{DATA_BENEF}", new Date(dtBenef).toLocaleDateString('pt-BR', {month: 'numeric', day:'numeric'})) */
+     }); 
+   })
+
+
+  newDoc.saveAndClose()
+
+  const pdfBlob = DriveApp.getFileById(newDoc.getId()).getBlob()
+  const pdf = destinationFolder.createFile(pdfBlob)
+  const pdfId = pdf.getId()
+  DriveApp.getFileById(newDoc.getId()).setTrashed(true)
+
+  return pdfId
+}
+
+
+
+
+
+
+
+function formatarPorcentagem(percent) {
+  return (parseFloat(percent) * 100).toFixed(2) + "%";
+}
+
+
+
+
+/** p4p */
+
+function createBonusLetter(destinationFolder, templateId, name, position, dtAdm, workMonths, target, elegible, dtPgto, neonResult, okr1, okr2, avarageOkr, perf1, perf2, avaragePerf, indPerf, indResult, riskFactor, totalValue){
+  const fileName = `P4P - ${name}`
+
+  const newFile = DriveApp.getFileById(templateId).makeCopy(fileName, destination=destinationFolder)
+  const newDoc = SlidesApp.openById(newFile.getId())
+  const docBody = newDoc.getSlides()
+
+  docBody.forEach(function(slide){
+     const shapes = (slide.getShapes());
+     shapes.forEach(function(shape){
+       shape.getText().replaceAllText("{NOME_COLABORADOR}", name)
+       shape.getText().replaceAllText("{CARGO}", position)
+       shape.getText().replaceAllText("{DATA_ADM}", new Date(dtAdm).toLocaleDateString('pt-BR'))
+       shape.getText().replaceAllText("{MESES_TRAB}", Number(workMonths).toFixed(0))
+       shape.getText().replaceAllText("{TARGET_IND}", currencyFormat(target))
+       shape.getText().replaceAllText("{ELEGIVEL}", elegible)
+       shape.getText().replaceAllText("{DATA_PGTO}", new Date(dtPgto).toLocaleDateString('pt-BR'))
+       shape.getText().replaceAllText("{VALOR_NEON}", (neonResult*100))
+       shape.getText().replaceAllText("{VALOR_OKR1}", (okr1*100))
+       shape.getText().replaceAllText("{VALOR_OKR2}", (okr2*100))
+       shape.getText().replaceAllText("{VALOR_OKR_MEDIA}", (avarageOkr*100))
+       shape.getText().replaceAllText("{VALOR_PERF1}", (perf1*100))
+       shape.getText().replaceAllText("{VALOR_PERF2}", (perf2*100))
+       shape.getText().replaceAllText("{VALOR_PERF_MEDIA}", (avaragePerf*100))
+       shape.getText().replaceAllText("{VALOR_PERF_IND}", (indPerf*100))
+       shape.getText().replaceAllText("{VALOR_RESUL_IND}", (indResult*100))
+       shape.getText().replaceAllText("{VALOR_FATOR}", (riskFactor*100))
+       shape.getText().replaceAllText("{VALOR_TOTAL}", currencyFormat(totalValue))
+
+     }); 
+   })
+
+  newDoc.saveAndClose()
+
+  const pdfBlob = DriveApp.getFileById(newDoc.getId()).getBlob()
+  const pdf = destinationFolder.createFile(pdfBlob)
+  const pdfId = pdf.getId()
+  DriveApp.getFileById(newDoc.getId()).setTrashed(true)
+
+  return pdfId
+}
+
