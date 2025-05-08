@@ -1,0 +1,427 @@
+
+
+  ######################################################
+
+
+
+
+
+function listarArquivosNaPlanilha() {
+  var pastaId = '1v2omjCooqY5lXKdfOrZJy8qc6RjVYRtA'; // Pasta
+  var pasta = DriveApp.getFolderById(pastaId);
+  var arquivos = pasta.getFiles();
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Test'); 
+  
+  // Limpa a aba antes de adicionar novos dados
+  sheet.clear();
+  // Adiciona cabeçalhos na planilha
+  sheet.appendRow(['ID do Arquivo', 'Nome do Arquivo','Tipo']);
+  // Itera sobre os arquivos na pasta e adiciona os detalhes na planilha
+  while (arquivos.hasNext()) {
+    var arquivo = arquivos.next();
+    var id = arquivo.getId();
+    var nome = arquivo.getName();
+    var tipo = arquivo.getMimeType();
+    sheet.appendRow([id, nome,tipo]);
+  }
+}
+
+function renomearArquivos() {
+  var pastaId = '1-c4LtZROZnqInbyF9kVuNxmoOyWyZ2K2'; // ID da pasta
+  var pasta = DriveApp.getFolderById(pastaId);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Test'); 
+  var range = sheet.getDataRange();
+  var valores = range.getValues();
+  
+  // Inicia a partir da segunda linha para ignorar cabeçalhos
+  for (var i = 1; i < valores.length; i++) {
+    var id = valores[i][0]; // ID do arquivo
+    var novoNome = valores[i][3]; // Novo nome da coluna D
+
+    if (novoNome) { // Verifica se há um novo nome
+      var arquivo = DriveApp.getFileById(id);
+      arquivo.setName(novoNome); // Renomeia o arquivo
+    }
+  }
+}
+
+
+
+
+  ######################################################
+
+
+
+
+  ######################################################
+
+
+
+
+  ######################################################
+
+
+
+
+
+function concederAcessoPorGrupo() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  var abaIDs = ss.getSheetByName("Os_IDs");
+  var abaAcessos = ss.getSheetByName("Acessos");
+  
+  var dadosIDs = abaIDs.getRange("A2:C").getValues(); 
+
+  // Ciclo por cada linha para processar
+  dadosIDs.forEach(function(linha, index) {
+    var id = linha[0]; // ID na coluna A
+    var nomeGrupo = linha[1]; // Grupo na coluna B
+    var statusCell = abaIDs.getRange(index + 2, 3); // Referência à coluna C (status) com ajuste para a linha correta
+
+    SpreadsheetApp.flush();
+
+    // Verificar se o ID não está vazio
+    if (id) {
+      // Atualiza o grupo na célula M4
+      abaIDs.getRange("M4").setValue(nomeGrupo); 
+      SpreadsheetApp.flush();
+
+      // Definir os e-mails baseados no grupo atual
+      var dadosAcessos = abaAcessos.getRange("A:A").getValues(); // Obtém os dados da aba Acessos
+      var emailsGrupo = dadosAcessos.map(function(email) { return email[0]; }).filter(Boolean); // Filtra valores vazios
+      SpreadsheetApp.flush();
+
+      // Concede acesso ao grupo de e-mails
+      try {
+        var file = DriveApp.getFileById(id); // Obtém o arquivo pelo ID
+
+        // Concede acesso sem notificação
+        emailsGrupo.forEach(function(email) {
+          file.addEditor(email); // Adiciona como Editor
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.EDIT); // Define a permissão de edição sem notificação
+        });
+
+        // Atualiza o status como "Concluído" na coluna C
+        statusCell.setValue("Concluído");
+      } catch (e) {
+        // Se ocorrer um erro, podemos atualizar a coluna C com uma mensagem de erro
+        statusCell.setValue("Erro: " + e.message);
+      }
+    } else {
+      // Se o ID estiver vazio, podemos deixar o status em branco ou fazer outra ação conforme necessário
+      statusCell.setValue(""); // Limpa o status se o ID estiver vazio
+    }
+    SpreadsheetApp.flush();
+  });
+
+  Logger.log('Processo concluído.');
+}
+
+
+
+  ######################################################
+
+
+
+
+  ######################################################
+
+
+
+
+  ######################################################
+
+
+
+
+function tornarArquivosVisiveisParaOrganizacao() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var abaIDs = ss.getSheetByName("Os_IDs");
+  
+  // Obtém todos os IDs a partir da coluna A, começando da linha 2
+  var dadosIDs = abaIDs.getRange("A2:A").getValues();
+
+  // Ciclo por cada ID na aba
+  dadosIDs.forEach(function(linha, index) {
+    var id = linha[0]; // ID na coluna A
+    var statusCell = abaIDs.getRange(index + 2, 3); // Referência à coluna C (status)
+
+    // Verificar se o ID não está vazio
+    if (id) {
+      try {
+        var file = DriveApp.getFileById(id); // Obtém o arquivo pelo ID
+        
+        // Torna o arquivo visível apenas para a organização
+        file.setSharing(DriveApp.Access.DOMAIN_WITH_LINK, DriveApp.Permission.EDIT); // Permissão somente para a organização
+
+        // Atualiza o status como "Tornado visível para a organização" na coluna C
+        statusCell.setValue("Tornado visível para a organização");
+        SpreadsheetApp.flush();
+      } catch (e) {
+        // Se ocorrer um erro, podemos atualizar a coluna C com uma mensagem de erro
+        statusCell.setValue("Erro: " + e.message);
+      }
+    } else {
+      // Se o ID estiver vazio, podemos deixar o status em branco
+      statusCell.setValue(""); // Limpa o status se o ID estiver vazio
+    }
+  SpreadsheetApp.flush();
+  });
+  
+ SpreadsheetApp.flush();
+
+  Logger.log('Processo concluído.');
+
+
+
+  ######################################################
+
+
+
+
+  ######################################################
+
+
+
+
+  ######################################################
+
+
+
+
+
+function registrarAcessoPorId(arquivoId) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var countIdSheet = ss.getSheetByName("CountIDs");
+  
+  // Obter o email do usuário ativo
+  var userEmail = Session.getActiveUser().getEmail();
+  
+  // Obter dados da aba "CountIDs"
+  var countData = countIdSheet.getDataRange().getValues();
+  var idCountMap = {};
+  
+  // Criar um objeto para contar acessos e lista de usuários
+  for (var i = 1; i < countData.length; i++) {
+    var id = countData[i][0];
+    var totalCount = countData[i][1] || 0; // Contagem
+    var userList = countData[i][2] ? countData[i][2].split(",") : []; // Lista de e-mails
+    
+    idCountMap[id] = {
+      totalAccess: totalCount,
+      users: userList,
+      userAccessCount: {},  // Para contar acessos por usuário
+    };
+  }
+
+  // Registrar acesso para o ID do arquivo clicado
+  if (idCountMap[arquivoId]) {
+    // Se o usuário já acessou, incrementar a contagem de acessos para esse usuário
+    if (idCountMap[arquivoId].userAccessCount[userEmail]) {
+      idCountMap[arquivoId].userAccessCount[userEmail] += 1;
+    } else {
+      idCountMap[arquivoId].userAccessCount[userEmail] = 1;
+      idCountMap[arquivoId].users.push(userEmail); // Adiciona o novo usuário à lista
+    }
+    
+    idCountMap[arquivoId].totalAccess += 1; // Incrementa a contagem total de acessos
+  } else {
+    // Se não existe, inicializa a contagem e a lista de usuários
+    idCountMap[arquivoId] = {
+      totalAccess: 1,
+      users: [userEmail],
+      userAccessCount: { [userEmail]: 1 }
+    };
+  }
+
+  // Atualizar a aba "CountIDs"
+  countIdSheet.clear(); // Limpa a aba antes de escrever novos dados
+  countIdSheet.appendRow(["ID do Arquivo", "Total de Acessos", "Usuários", "Acessos por Usuário"]); // Cabeçalhos
+  for (var id in idCountMap) {
+    var userList = idCountMap[id].users.join(", ");
+    var accessSummary = [];
+    for (var user in idCountMap[id].userAccessCount) {
+      accessSummary.push(user + ": " + idCountMap[id].userAccessCount[user]);
+    }
+    countIdSheet.appendRow([id, idCountMap[id].totalAccess, userList, accessSummary.join(", ")]);
+  }
+}
+
+
+
+  ######################################################
+
+
+
+
+  ######################################################
+
+
+
+
+  ######################################################
+
+
+
+
+function removeAccessFromOthers() {
+  // Nome da aba onde estão os IDs e o status
+  const sheetName = 'Remover_Acesso';
+  
+  // Seu e-mail ou ID do usuário que deve manter o acesso
+  const emailToKeep = 'diego.mendes@neon.com.br';
+
+  // Acessa a planilha ativa e a aba especificada
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName(sheetName);
+  
+  // Obtém todos os dados da coluna A (IDs) e cria um array de IDs
+  const idsRange = sheet.getRange('A2:A' + sheet.getLastRow());
+  const sheetIds = idsRange.getValues().flat();
+
+  sheetIds.forEach(function(sheetId, index) {
+    if (sheetId) { // Verifica se o ID não está vazio
+      try {
+        var file = DriveApp.getFileById(sheetId);
+        var editors = file.getEditors();
+        
+        // Remove acesso de todos os editores, exceto o usuário que deve manter o acesso
+        for (var i = 0; i < editors.length; i++) {
+          var editorEmail = editors[i].getEmail();
+          if (editorEmail !== emailToKeep) {
+            file.removeEditor(editorEmail);
+          }
+        }
+        
+        // Garante que você seja um editor da planilha
+        if (!file.hasEditor(emailToKeep)) {
+          file.addEditor(emailToKeep);
+        }
+
+        // Atualiza o status na coluna B
+        sheet.getRange(index + 2, 2).setValue('Concluída');
+
+        Logger.log('Acesso removido para: ' + editors.map(function(editor) { return editor.getEmail(); }).join(', '));
+        Logger.log('Acesso mantido para: ' + emailToKeep);
+      } catch (e) {
+        Logger.log('Erro ao processar a planilha com ID ' + sheetId + ': ' + e.message);
+        // Atualiza o status na coluna B em caso de erro
+        sheet.getRange(index + 2, 2).setValue('Erro: ' + e.message);
+      }
+    }
+  });
+}
+
+
+
+  ######################################################
+
+
+
+  
+//'diego.mendes@neon.com.br'
+function changeAccessToViewer() {
+  // Nome da aba onde estão os IDs e o status
+  const sheetName = 'Remover_Acesso';
+  
+  // Seu e-mail ou ID do usuário que deve manter o acesso como editor
+  const emailToKeep = 'diego.mendes@neon.com.br';
+
+  // Acessa a planilha ativa e a aba especificada
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName(sheetName);
+  
+  // Obtém todos os dados da coluna A (IDs) e cria um array de IDs
+  const idsRange = sheet.getRange('A2:A' + sheet.getLastRow());
+  const sheetIds = idsRange.getValues().flat();
+
+  sheetIds.forEach(function(sheetId, index) {
+    if (sheetId) { // Verifica se o ID não está vazio
+      try {
+        var file = DriveApp.getFileById(sheetId);
+        var editors = file.getEditors();
+        
+        // Altera o acesso de todos os editores para "somente leitura", exceto o usuário que deve manter o acesso
+        editors.forEach(function(editor) {
+          var editorEmail = editor.getEmail();
+          if (editorEmail !== emailToKeep) {
+            file.removeEditor(editorEmail); // Remove o editor
+            file.addViewer(editorEmail); // Adiciona o usuário como visualizador
+          }
+        });
+        
+        // Garante que você seja um editor da planilha
+        if (!editors.some(editor => editor.getEmail() === emailToKeep)) {
+          file.addEditor(emailToKeep); // Adiciona o seu e-mail como editor
+        }
+
+        // Atualiza o status na coluna B
+        sheet.getRange(index + 2, 2).setValue('Concluída');
+
+        Logger.log('Acesso alterado para: ' + editors.map(function(editor) { return editor.getEmail(); }).join(', '));
+        Logger.log('Acesso mantido para: ' + emailToKeep);
+      } catch (e) {
+        Logger.log('Erro ao processar a planilha com ID ' + sheetId + ': ' + e.message);
+        // Atualiza o status na coluna B em caso de erro
+        sheet.getRange(index + 2, 2).setValue('Erro: ' + e.message);
+      }
+    }
+  });
+}
+
+
+
+
+
+
+
+
+  #############
+function changeFolderAccessToViewer() {
+  // Nome da aba onde estão os IDs e o status
+  const sheetName = 'Remover_AcessoPasta';
+  
+  // Seu e-mail ou ID do usuário que deve manter o acesso como editor
+  const emailToKeep = 'diego.mendes@neon.com.br';
+
+  // Acessa a planilha ativa e a aba especificada
+  const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = spreadsheet.getSheetByName(sheetName);
+  
+  // Obtém todos os dados da coluna A (IDs) e cria um array de IDs
+  const idsRange = sheet.getRange('A2:A' + sheet.getLastRow());
+  const folderIds = idsRange.getValues().flat();
+
+  folderIds.forEach(function(folderId, index) {
+    if (folderId) { // Verifica se o ID não está vazio
+      try {
+        var folder = DriveApp.getFolderById(folderId);
+        var editors = folder.getEditors();
+        
+        // Altera o acesso de todos os editores para "somente leitura", exceto o usuário que deve manter o acesso
+        editors.forEach(function(editor) {
+          var editorEmail = editor.getEmail();
+          if (editorEmail !== emailToKeep) {
+            folder.removeEditor(editorEmail); // Remove o editor
+            folder.addViewer(editorEmail); // Adiciona o usuário como visualizador
+          }
+        });
+        
+        // Garante que você seja um editor da pasta
+        if (!editors.some(editor => editor.getEmail() === emailToKeep)) {
+          folder.addEditor(emailToKeep); // Adiciona o seu e-mail como editor
+        }
+
+        // Atualiza o status na coluna B
+        sheet.getRange(index + 2, 2).setValue('Concluída');
+
+        Logger.log('Acesso alterado para: ' + editors.map(function(editor) { return editor.getEmail(); }).join(', '));
+        Logger.log('Acesso mantido para: ' + emailToKeep);
+      } catch (e) {
+        Logger.log('Erro ao processar a pasta com ID ' + folderId + ': ' + e.message);
+        // Atualiza o status na coluna B em caso de erro
+        sheet.getRange(index + 2, 2).setValue('Erro: ' + e.message);
+      }
+    }
+  });
+}
