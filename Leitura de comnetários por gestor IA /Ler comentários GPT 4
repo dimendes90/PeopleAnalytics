@@ -1,0 +1,102 @@
+import pandas as pd
+import requests
+
+# Configurações da API
+api_token = "..."  # Substitua pela sua chave de API
+model = "gpt-4o"
+
+#
+file_path = 'C:/.xlsx'  # Ajuste para o caminho do seu arquivo
+data = pd.read_excel(file_path)
+
+# métricas 
+total_transacoes = len(data)
+total_chargebacks = data[data['CBK'] == 'Sim'].shape[0]
+media_valor = data['Valor'].mean()
+mediana_valor = data['Valor'].median()
+percentual_chargeback = (total_chargebacks / total_transacoes) * 100 if total_transacoes > 0 else 0
+
+# resumos
+summary = f"""
+Total de Transações: {total_transacoes}
+Total de Chargebacks: {total_chargebacks}
+Média do Valor das Transações: {media_valor:.2f}
+Mediana do Valor das Transações: {mediana_valor:.2f}
+Percentual de Chargebacks: {percentual_chargeback:.2f}%
+"""
+
+#requisição à API
+query = f"""
+Por favor, analise as seguintes métricas de transações e forneça insights, alertas e previsões sobre chargebacks.
+{summary}
+"""
+
+response = requests.post(
+    'https://...endpoint',
+    headers={
+        'Authorization': f'Bearer {api_token}',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'model': model,
+        'messages': [{'role': 'user', 'content': query}]
+    }
+)
+
+# Verificação 
+if response.status_code == 200:
+    insights = response.json()['choices'][0]['message']['content']
+else:
+    insights = "Erro ao obter insights da API: " + response.text
+
+
+output_df = pd.DataFrame({"Insights": [insights]})
+output_file_path = 'insights_chargebacks.xlsx'  # Caminho para o arquivo de saída
+output_df.to_excel(output_file_path, index=False)
+
+print(f"Insights foram exportados para '{output_file_path}'")
+
+
+
+
+#################################################################
+
+#chamada simples
+
+
+#################################################################
+#pip install requests
+
+import requests
+
+# Sua chave de API da OpenAI
+api_key = '...'
+
+# O endpoint da API
+url = 'https://api.openai.com/v1/chat/completions'
+
+# O cabeçalho da requisição
+headers = {
+    'Authorization': f'Bearer {api_key}',
+    'Content-Type': 'application/json',
+}
+
+# O corpo da requisição
+data = {
+    'model': 'gpt-3.5-turbo',  # Ou o modelo que você preferir
+    'messages': [
+        {'role': 'user', 'content': 'Olá, como você está?'}
+    ],
+    'max_tokens': 100,  # Número máximo de tokens na resposta
+}
+
+# Fazendo a requisição POST
+response = requests.post(url, headers=headers, json=data)
+
+# Verificando se a requisição foi bem-sucedida
+if response.status_code == 200:
+    response_data = response.json()
+    print(response_data['choices'][0]['message']['content'])
+else:
+    print(f'Erro: {response.status_code}, {response.text}')
+
