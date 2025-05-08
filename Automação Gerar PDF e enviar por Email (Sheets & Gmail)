@@ -408,3 +408,69 @@ function createBonusLetter(destinationFolder, templateId, name, position, dtAdm,
   return pdfId
 }
 
+
+
+
+
+/*************************************
+
+EMAIL
+
+**************************************/
+
+
+function sendEmail(recipientEmail, senderEmail, copyEmail, idPdf, subject, htmlBody) {
+
+  const aliases = GmailApp.getAliases();
+  
+  const pdf = DriveApp.getFileById(idPdf)
+
+  if (aliases.length > 0) {
+      GmailApp.sendEmail(recipientEmail, subject, 'Body', {
+        attachments: pdf,
+        htmlBody: htmlBody,
+        cc: copyEmail,
+        'from': senderEmail
+        })
+
+  } else {
+      GmailApp.sendEmail(recipientEmail, subject, 'Body', {
+        attachments: pdf,
+        htmlBody: htmlBody,
+        cc: copyEmail
+        })
+  }
+}
+
+
+/** */
+function htmlEmailBody(destinationFolder, docId, name) {
+  const fileName = `Email - ${name}`
+
+  const newFile = DriveApp.getFileById(docId).makeCopy(fileName, destination=destinationFolder)
+  const newDoc = DocumentApp.openById(newFile.getId())
+  const docBody = newDoc.getBody()
+  
+  docBody.replaceText("{NOME_COLABORADOR}", name)
+
+  newDoc.saveAndClose()
+
+  const url = `https://docs.google.com/feeds/download/documents/export/Export?id=${newDoc.getId()}&exportFormat=html`;
+  const param = {
+    method : 'get',
+    headers : {
+      'Authorization' : 'Bearer '+ ScriptApp.getOAuthToken()
+      },muteHttpExceptions: true};
+  let html = UrlFetchApp.fetch(url,param).getContentText();
+  html = html.replace(/<head>.*<\/head>/, '');
+  html = html.replace(/<(span|\/span|body|\/body|html|\/html)>/g, '');
+  html = html.replace(/(id|class|style|start|colspan|rowspan)="[^"]*"/g,'');
+
+
+  DriveApp.getFileById(newDoc.getId()).setTrashed(true)
+
+  return html
+} 
+
+
+
