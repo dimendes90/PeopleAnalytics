@@ -65,38 +65,30 @@ print(f"Insights foram exportados para '{output_file_path}'")
 
 
 #################################################################
-#pip install requests
 
 import requests
 
-# Sua chave de API da OpenAI
-api_key = '...'
+api_token = "sk-c4bac565e0254672a2b6322a0d41053f"  # Substitua pela sua chave de API
+model = "gpt-4o-mini"  
+query = "Quanto é 2+2?"
 
-# O endpoint da API
-url = 'https://api.openai.com/v1/chat/completions'
+# Requisição 
+response = requests.post(
+    'https://gepeto.svc.in.devneon.com.br/api/chat/completions',
+    headers={
+        'Authorization': f'Bearer {api_token}',
+        'Content-Type': 'application/json'
+    },
+    json={
+        'model': model,
+        'messages': [{'role': 'user', 'content': query}]
+    }
+)
 
-# O cabeçalho da requisição
-headers = {
-    'Authorization': f'Bearer {api_key}',
-    'Content-Type': 'application/json',
-}
+result = response.json()
 
-# O corpo da requisição
-data = {
-    'model': 'gpt-3.5-turbo',  # Ou o modelo que você preferir
-    'messages': [
-        {'role': 'user', 'content': 'Olá, como você está?'}
-    ],
-    'max_tokens': 100,  # Número máximo de tokens na resposta
-}
-
-# Fazendo a requisição POST
-response = requests.post(url, headers=headers, json=data)
-
-# Verificando se a requisição foi bem-sucedida
-if response.status_code == 200:
-    response_data = response.json()
-    print(response_data['choices'][0]['message']['content'])
+if 'choices' in result and len(result['choices']) > 0:
+    answer = result['choices'][0]['message']['content']
+    print(f"Resposta: {answer}")  
 else:
-    print(f'Erro: {response.status_code}, {response.text}')
-
+    print("Nenhuma resposta foi gerada.")
