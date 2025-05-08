@@ -1,0 +1,164 @@
+function exportarPreWork() {
+
+
+
+//const baseGeral = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Base_Geral_PreWork');
+const inputBaseGeral = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Input_BaseGeral');
+const inputInsight = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Input_Insights');
+
+const sheetPreWork = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('2_Calibração Assíncrona'); // <-- Base que vai exportar 1
+const sheetAuxiliar = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Auxiliar');
+const sheetInsight = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('3_Insights_Neowners'); // <-- Base que vai exportar 1
+//const sheetAcessos = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Acessos');
+
+var nomesSalas = sheetAuxiliar.getRange("A:A").getValues(); //Determina coluna dos nomes
+var linhaAtual = 2;
+
+  while (nomesSalas[linhaAtual-1][0] !== "") {
+
+    var nomeAtualSala = sheetAuxiliar.getRange("A"+linhaAtual).getValue();
+    sheetAuxiliar.getRange("H3").setValue(nomeAtualSala);              //  <<< --- Loop da Sala
+    SpreadsheetApp.flush();
+    
+    var idSala = sheetAuxiliar.getRange("H4").getValue();
+    SpreadsheetApp.flush();
+    
+    //Apagando e colando informações 
+    //Calibação
+
+    sheetPreWork.getRange("A3:Z").clearContent();
+    SpreadsheetApp.flush();
+      
+    inputBaseGeral.getRange("A3:Z").copyTo(sheetPreWork.getRange("A3"), {contentsOnly:true});
+    SpreadsheetApp.flush();
+    
+    inputBaseGeral.getRange("E3:F").copyTo(sheetPreWork.getRange("E3"), {contentsOnly:false});
+    SpreadsheetApp.flush();
+
+    //Insigths
+    sheetInsight.getRange("A4:M").clearContent();
+    SpreadsheetApp.flush();
+
+    inputInsight.getRange("A3:M").copyTo(sheetInsight.getRange("A3"), {contentsOnly:true});
+    SpreadsheetApp.flush();
+
+
+
+
+    //Exporta Sheets
+
+    linha = linhaAtual
+    exportarAbasPW(nomeAtualSala, linha, idSala)
+
+
+    linhaAtual++;
+   //fim do while
+  }
+ 
+ //SpreadsheetApp.getUi().alert('Ação concluída', 'Arquivos gerados com sucesso.', SpreadsheetApp.getUi().ButtonSet.OK)
+
+
+}
+
+function exportarAbasPW(nomeAtualSala, linha, idSala) {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  
+  var originalSpreadsheetId = '1wI4DzHldeSvkgf0ubj_KCBSfnuspvwj7ssPh8XIqW1U'; // <<< - - - - ID da planilha original
+  var sheetsToCopy = ['1_Orientações','2_Calibração Assíncrona','3_Insights_Neowners']; // < - NOMES das abas a serem copiadas // Na Ordem
+  //var folderId = '1vXsNIg2c487u781hJvHPNW__hlJ6O8Dx'; ////                            <<< - - - - Pasta destino // ID da pasta de destino
+  var originalSpreadsheet = SpreadsheetApp.openById(originalSpreadsheetId);// Abre a planilha original
+  var idSheet = originalSpreadsheet.getSheetByName('Auxiliar');
+  var sheetAcess = originalSpreadsheet.getSheetByName('Acessos');
+  
+
+  folderId = idSala
+
+  
+  nomearquivo = "GT 2024.2_Calibração Assíncrona - " + nomeAtualSala  /// <<---- Nome Arquivo que será criado / Padrão
+
+  // Cria uma nova planilha
+  var newSpreadsheet = SpreadsheetApp.create(nomearquivo);  ////  <<---- Nome Arquivo
+  
+  // Altera pelas abas a serem copiadas
+  sheetsToCopy.forEach(function(sheetName) {
+    var sheet = originalSpreadsheet.getSheetByName(sheetName);
+    if (sheet) {
+      sheet.copyTo(newSpreadsheet).setName(sheetName);
+    }
+  });
+  
+  
+  newSpreadsheet.deleteSheet(newSpreadsheet.getSheets()[0]);   // Remove a aba padrão criada automaticamente
+  
+
+  var folder = DriveApp.getFolderById(folderId);
+  var file = DriveApp.getFileById(newSpreadsheet.getId());
+  folder.addFile(file);
+  DriveApp.getRootFolder().removeFile(file); // Remove do Meu Drive para evitar duplicidade
+
+
+  
+  var newSpreadsheetId = newSpreadsheet.getId();   // Obtém o ID da nova Planilha 
+
+  //Copiar Email BP
+  
+  var emailHRBP = idSheet.getRange("E"+linha).getValue();
+  // Salva o ID na aba "id_criado" da planilha original
+  idSheet.getRange('B'+linha).setValue(newSpreadsheetId);
+  idSheet.getRange('C'+linha).setValue("Arquivo Gerado");
+
+  var sheetId = newSpreadsheetId;
+  
+                                                                          // Liberar acesso:
+  //var email = emailAtual;   //<--- Email para liberar acesso
+  SpreadsheetApp.flush();
+
+  // Abre a planilha pelo ID
+  var spreadsheet = SpreadsheetApp.openById(sheetId);
+  var emailColumn = 2;  // Coluna B (1-indexed)
+  var lastRow = sheetAcess.getLastRow();
+  var emails = [];
+  
+  for (var i = 2; i <= lastRow; i++) {
+    var email = sheetAcess.getRange(i, emailColumn).getValue();
+    if (email) {
+      emails.push(email);
+    }
+  }
+  for (var i = 0; i < emails.length; i++) {
+    spreadsheet.addEditor(emails[i]);
+  }
+
+
+  SpreadsheetApp.flush();
+
+  spreadsheet.addEditor(emailHRBP);
+
+  SpreadsheetApp.flush();
+
+
+  //// loop ^^^
+  //// Fim
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
